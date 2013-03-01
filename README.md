@@ -18,6 +18,7 @@ Usage
 Result
 ------
     2013-02-27 15:00:00 [000.000.000.000  ] (xxx@xxx.xxx                 ) succeeded
+    2013-02-27 15:00:00 [000.000.000.000  ] (xxx@xxx.xxx                 ) denied     000.000.000.000 => 000.000.000.000
     2013-02-27 15:00:00 [000.000.000.000  ] (xxx@xxx.xxx                 ) failed     Failed
     2013-02-27 15:00:00 [000.000.000.000  ] (xxx@xxx.xxx                 ) failed     Short Password
 
