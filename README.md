@@ -16,9 +16,17 @@ Sample syslog format
 	Feb 27 15:00:00 vpn-001 Juniper: 2013-02-27 15:00:00 - ive - [000.000.000.000] SAMPLE::xxx@xxx.xxx(Users)[] - VPN Tunneling: Session started for user with IP 000.000.000.000,  hostname XXX-XXX-XXX
 	Feb 27 15:00:00 vpn-001 Juniper: 2013-02-27 15:00:00 - ive - [000.000.000.000] SAMPLE::xxx@xxx.xxx(Users)[] - VPN Tunneling: Session ended for user with IP 000.000.000.000
 
-Usage
------
+Usage - Normal log file
+-----------------------
     # ./ae_vpn_log_parser.pl [SYSLOG-FILE]
+    
+Usage - FIFO file
+-----------------
+    # mkfifo /var/log/fifo_log
+    # vim /etc/rsyslog.conf
+    local7.*        |/var/log/fifo_log
+
+    # ./ae_vpn_log_parser.pl /var/log/fifo_log
 
 Result
 ------
