@@ -42,7 +42,10 @@ qr/Login (succeeded|failed)(?:(?!Reason:\s|because\s).)+(?:(?:Reason:|because)\s
   ;    # using look-ahead assertion to match 'Reason: Failed' correctly
 my $PAT_ACCESS_DENIED =
 qr /Remote address for user (.+?)\/.+? changed from ($PAT_IPV4) to ($PAT_IPV4)\. Access denied\./;
-my $PAT_NEGATIVE = qr/(?:failed|denied)/;
+my $PAT_NEGATIVE = qr/(?:failed|denied|ended)/;
+
+my $PAT_TUNNELING =
+  qr/VPN Tunneling: Session (started|ended) for user with IP ($PAT_IPV4)/;
 
 sub parse_date {
     my ($date) = @_;
@@ -54,7 +57,7 @@ sub parse_info {
     my ($info) = @_;
     my ( $ip, $account ) = ( '', '' );
 
-    if ( $info =~ m/$PAT_INFO/ ) {
+    if ( $info =~ m/^$PAT_INFO/ ) {
         $ip      = $1;
         $account = $2;
     }
@@ -62,7 +65,7 @@ sub parse_info {
     return ( $ip, $account );
 }
 
-sub parse_msg {
+sub parse_login_msg {
     my ($msg) = @_;
     my ( $result, $reason ) = ( '', '' );
 
@@ -70,9 +73,21 @@ sub parse_msg {
         $result = $1;
         $reason = $2 if ( defined($2) );
     }
-    elsif ( $msg =~ m/$PAT_ACCESS_DENIED/ ) {
+    elsif ( $msg =~ m/^$PAT_ACCESS_DENIED/ ) {
         $result = "denied";
         $reason = "$2 => $3";
+    }
+
+    return ( $result, $reason );
+}
+
+sub parse_nc_msg {
+    my ($msg) = @_;
+    my ( $result, $reason ) = ( '', '' );
+
+    if ( $msg =~ m/$PAT_TUNNELING/ ) {
+        $result = $1;
+        $reason = $2;
     }
 
     return ( $result, $reason );
@@ -87,9 +102,19 @@ sub parse_line {
         my ( $date, $token, $info, $msg ) = split( /\s+\-\s+/, $line );
 
         my $dt = strftime( "%F %T", localtime( parse_date($date) ) );
-        my ( $ip,     $account ) = parse_info($info);
-        my ( $result, $reason )  = parse_msg($msg);
+        my ( $ip, $account ) = parse_info($info);
 
+        my ( $result, $reason );
+
+        ( $result, $reason ) = parse_login_msg($msg);
+        printf(
+            "%s [%s%-17s%s] (%-28s) %s%-10s%s %s\n",
+            $dt, YELLOW, $ip, RESET, $account,
+            ( $result =~ m/$PAT_NEGATIVE/i ? RED : GREEN ),
+            $result, RESET, $reason
+        ) if ($result);
+
+        ( $result, $reason ) = parse_nc_msg($msg);
         printf(
             "%s [%s%-17s%s] (%-28s) %s%-10s%s %s\n",
             $dt, YELLOW, $ip, RESET, $account,
