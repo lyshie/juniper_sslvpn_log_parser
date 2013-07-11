@@ -31,6 +31,10 @@ our @EXPORT_OK = qw(parse_line);
 use Date::Parse;
 use POSIX qw(strftime);
 use Term::ANSIColor qw(:constants);
+use Geo::IPfree;
+
+my $GEO = Geo::IPfree->new();
+$GEO->Faster();
 
 my $PAT_DATE    = qr/\d{4}\-\d{2}\-\d{2}\s\d{2}:\d{2}:\d{2}/;
 my $PAT_IPV4    = qr/\d+\.\d+\.\d+\.\d+/;
@@ -75,7 +79,9 @@ sub parse_login_msg {
     }
     elsif ( $msg =~ m/^$PAT_ACCESS_DENIED/ ) {
         $result = "denied";
-        $reason = "$2 => $3";
+        my ($c2) = $GEO->LookUp($2);
+        my ($c3) = $GEO->LookUp($3);
+        $reason = "$2 ($c2) => $3 ($c3)";
     }
 
     return ( $result, $reason );
@@ -108,18 +114,22 @@ sub parse_line {
 
         ( $result, $reason ) = parse_login_msg($msg);
         printf(
-            "%s [%s%-17s%s] (%-28s) %s%-10s%s %s\n",
-            $dt, YELLOW, $ip, RESET, $account,
-            ( $result =~ m/$PAT_NEGATIVE/i ? RED : GREEN ),
-            $result, RESET, $reason
+            "%s [%s%-17s%s] (%s) (%-28s) %s%-10s%s %s\n",
+            $dt,                      YELLOW,
+            $ip,                      RESET,
+            ( $GEO->LookUp($ip) )[0], $account,
+            ( $result =~ m/$PAT_NEGATIVE/i ? RED : GREEN ), $result,
+            RESET, $reason
         ) if ($result);
 
         ( $result, $reason ) = parse_nc_msg($msg);
         printf(
-            "%s [%s%-17s%s] (%-28s) %s%-10s%s %s\n",
-            $dt, YELLOW, $ip, RESET, $account,
-            ( $result =~ m/$PAT_NEGATIVE/i ? RED : GREEN ),
-            $result, RESET, $reason
+            "%s [%s%-17s%s] (%s) (%-28s) %s%-10s%s %s\n",
+            $dt,                      YELLOW,
+            $ip,                      RESET,
+            ( $GEO->LookUp($ip) )[0], $account,
+            ( $result =~ m/$PAT_NEGATIVE/i ? RED : GREEN ), $result,
+            RESET, $reason
         ) if ($result);
     }
 }
