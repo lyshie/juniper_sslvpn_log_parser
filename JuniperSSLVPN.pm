@@ -32,6 +32,7 @@ use Date::Parse;
 use POSIX qw(strftime);
 use Term::ANSIColor qw(:constants);
 use Geo::IPfree;
+use Time::Duration;
 
 my $GEO = Geo::IPfree->new();
 $GEO->Faster();
@@ -46,10 +47,12 @@ qr/Login (succeeded|failed)(?:(?!Reason:\s|because\s).)+(?:(?:Reason:|because)\s
   ;    # using look-ahead assertion to match 'Reason: Failed' correctly
 my $PAT_ACCESS_DENIED =
 qr /Remote address for user (.+?)\/.+? changed from ($PAT_IPV4) to ($PAT_IPV4)\. Access denied\./;
-my $PAT_NEGATIVE = qr/(?:failed|denied|ended)/;
+my $PAT_NEGATIVE = qr/(?:failed|denied|ended|timeout)/;
 
 my $PAT_TUNNELING =
   qr/VPN Tunneling: Session (started|ended) for user with IP ($PAT_IPV4)/;
+my $PAT_SESSION_TIMEOUT =
+qr/Session timed out for .+? \(last access at (.+?)\)\. Idle session identified during routine system scan\./;
 
 sub parse_date {
     my ($date) = @_;
@@ -95,6 +98,10 @@ sub parse_nc_msg {
         $result = $1;
         $reason = $2;
     }
+    elsif ( $msg =~ m/$PAT_SESSION_TIMEOUT/ ) {
+        $result = 'timeout';
+        $reason = parse_date($1);
+    }
 
     return ( $result, $reason );
 }
@@ -107,7 +114,8 @@ sub parse_line {
         my $line = $1;
         my ( $date, $token, $info, $msg ) = split( /\s+\-\s+/, $line );
 
-        my $dt = strftime( "%F %T", localtime( parse_date($date) ) );
+        my $ts = parse_date($date);
+        my $dt = strftime( "%F %T", localtime($ts) );
         my ( $ip, $account ) = parse_info($info);
 
         my ( $result, $reason );
@@ -125,11 +133,11 @@ sub parse_line {
         ( $result, $reason ) = parse_nc_msg($msg);
         printf(
             "%s [%s%-17s%s] (%s) (%-28s) %s%-10s%s %s\n",
-            $dt,                      YELLOW,
-            $ip,                      RESET,
-            ( $GEO->LookUp($ip) )[0], $account,
-            ( $result =~ m/$PAT_NEGATIVE/i ? RED : GREEN ), $result,
-            RESET, $reason
+            $dt, YELLOW, $ip, RESET, ( $GEO->LookUp($ip) )[0],
+            $account, ( $result =~ m/$PAT_NEGATIVE/i ? RED : GREEN ),
+            $result, RESET, ( $result eq 'timeout' )
+            ? duration( $ts - $reason )
+            : $reason
         ) if ($result);
     }
 }

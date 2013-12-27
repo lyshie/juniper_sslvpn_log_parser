@@ -17,6 +17,7 @@ Sample syslog format
 
         Feb 27 15:00:00 vpn-001 Juniper: 2013-02-27 15:00:00 - ive - [000.000.000.000] SAMPLE::xxx@xxx.xxx(Users)[] - VPN Tunneling: Session started for user with IP 000.000.000.000,  hostname XXX-XXX-XXX
         Feb 27 15:00:00 vpn-001 Juniper: 2013-02-27 15:00:00 - ive - [000.000.000.000] SAMPLE::xxx@xxx.xxx(Users)[] - VPN Tunneling: Session ended for user with IP 000.000.000.000
+        Feb 27 15:00:00 vpn-001 Juniper: 2013-02-27 15:00:00 - ive - [000.000.000.000] SAMPLE::xxx@xxx.xxx(Users)[] - Session timed out for xxx@xxx.xxx.xxx/Users (session:00000000) due to inactivity (last access at 13:59:31 2013/02/27). Idle session identified during routine system scan.
 
 Usage - Normal log file
 -----------------------
@@ -43,7 +44,7 @@ Result
 
         2013-02-27 15:00:00 [000.000.000.000  ] (xxx@xxx.xxx                 ) started    000.000.000.000
         2013-02-27 15:00:00 [000.000.000.000  ] (xxx@xxx.xxx                 ] ended      000.000.000.000
-
+        2013-02-27 15:00:00 [000.000.000.000  ] (xxx@xxx.xxx                 ] timeout    1 hour and 2 minutes
 
 Author
 ------
