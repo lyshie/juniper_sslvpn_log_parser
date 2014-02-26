@@ -48,4 +48,4 @@ Result
 
 Author
 ------
-    SHIE, LI-Yi <lyshie@mx.nthu.edu.tw>
+    SHIE, Li-Yi <lyshie@mx.nthu.edu.tw>
